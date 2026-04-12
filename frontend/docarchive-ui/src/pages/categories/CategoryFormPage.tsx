@@ -149,7 +149,17 @@ export default function CategoryFormPage() {
       if (isEdit) {
         await updateCategory(Number(id), payload);
       } else {
-        await createCategory({ parentId: payload.parentId, name_AR: payload.name_AR, name_EN: payload.name_EN, description_AR: payload.description_AR, description_EN: payload.description_EN });
+        const created = await createCategory({
+          parentId: payload.parentId,
+          name_AR: payload.name_AR,
+          name_EN: payload.name_EN,
+          description_AR: payload.description_AR,
+          description_EN: payload.description_EN,
+        });
+        // Save custom fields if any were defined
+        if (fields.length > 0) {
+          await updateCategory(created.id, { ...payload, isActive: true });
+        }
       }
       message.success(t('common.success'));
       navigate('/categories');
