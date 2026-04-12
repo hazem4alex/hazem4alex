@@ -96,18 +96,26 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasOne(x => x.ChangedByUser).WithMany(x => x.HistoryEntries).HasForeignKey(x => x.ChangedBy).OnDelete(DeleteBehavior.NoAction);
         });
 
-        // Seed default admin user (password: Admin@123)
-        modelBuilder.Entity<User>().HasData(new User
+    }
+
+    // Called at startup to ensure the default admin user exists.
+    // BCrypt hash is computed at runtime (cannot be computed at migration time).
+    public void SeedAdminUser()
+    {
+        if (!Users.Any(u => u.Username == "admin"))
         {
-            Id = 1,
-            Username = "admin",
-            PasswordHash = "$2a$11$rQnZ4J6q5v8Y2K1X3M7N9OxZ5P8A4B6C2D1E0F3G7H9I5J8K2L4M6",
-            FullName_AR = "مدير النظام",
-            FullName_EN = "System Administrator",
-            Role = "Admin",
-            IsActive = true,
-            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-            CreatedBy = null
-        });
+            Users.Add(new Entities.User
+            {
+                Username = "admin",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
+                FullName_AR = "مدير النظام",
+                FullName_EN = "System Administrator",
+                Role = "Admin",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = null
+            });
+            SaveChanges();
+        }
     }
 }

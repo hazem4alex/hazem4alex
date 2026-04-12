@@ -81,11 +81,12 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Run migrations on startup
+// Run migrations and seed on startup
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
+    db.SeedAdminUser(); // creates admin/Admin@123 if no admin exists
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
