@@ -80,13 +80,15 @@ export default function DynamicFormField({ field, language, disabled }: Props) {
     return val;
   };
 
+  const isDateType = field.fieldType === 'date' || field.fieldType === 'datetime';
+
   return (
     <Form.Item
       name={['fieldValues', String(field.id)]}
       label={label}
       rules={rules}
-      normalize={normalize}
-      getValueFromEvent={getValueFromEvent}
+      normalize={isDateType ? normalize : undefined}
+      getValueFromEvent={isDateType ? getValueFromEvent : undefined}
     >
       {renderInput()}
     </Form.Item>
