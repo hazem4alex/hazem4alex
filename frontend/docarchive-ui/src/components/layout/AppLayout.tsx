@@ -90,7 +90,7 @@ export default function AppLayout() {
 
           <Space>
             <LanguageSwitcher />
-            <Dropdown menu={{ items: userMenu }} placement="bottomEnd">
+            <Dropdown menu={{ items: userMenu }} placement="bottomRight">
               <Space style={{ cursor: 'pointer' }}>
                 <Avatar icon={<UserOutlined />} style={{ background: '#1677ff' }} />
                 <Text>{displayName}</Text>
