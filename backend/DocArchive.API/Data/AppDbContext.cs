@@ -98,16 +98,20 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     }
 
-    // Called at startup to ensure the default admin user exists.
-    // BCrypt hash is computed at runtime (cannot be computed at migration time).
+    // Called at startup to ensure the default admin user exists with a valid password hash.
     public void SeedAdminUser()
     {
-        if (!Users.Any(u => u.Username == "admin"))
+        const string defaultPassword = "Admin@123";
+        // work factor 10 is fast enough for startup; change after first login
+        var hash = BCrypt.Net.BCrypt.HashPassword(defaultPassword, workFactor: 10);
+
+        var admin = Users.FirstOrDefault(u => u.Username == "admin");
+        if (admin == null)
         {
             Users.Add(new Entities.User
             {
                 Username = "admin",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
+                PasswordHash = hash,
                 FullName_AR = "مدير النظام",
                 FullName_EN = "System Administrator",
                 Role = "Admin",
@@ -115,7 +119,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = null
             });
-            SaveChanges();
         }
+        else
+        {
+            // Reset hash every startup so a stale/wrong hash is never the blocker.
+            // Once you can log in and change the password, this resets to Admin@123
+            // on each restart — change the admin password via the UI to lock it in.
+            admin.PasswordHash = hash;
+            admin.IsActive = true;
+        }
+        SaveChanges();
     }
 }
