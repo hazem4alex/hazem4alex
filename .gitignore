@@ -1,0 +1,31 @@
+# .NET
+**/bin/
+**/obj/
+**/*.user
+**/*.suo
+.vs/
+*.log
+publish/
+
+# Node
+node_modules/
+dist/
+.vite/
+*.local
+
+# Secrets
+appsettings.Production.json
+*.pfx
+*.p12
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# EF migrations (optional — keep if you want to track them)
+# backend/DocArchive.API/Data/Migrations/
