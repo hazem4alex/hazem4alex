@@ -20,8 +20,5 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.*" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="wwwroot\**" CopyToPublishDirectory="PreserveNewest" />
-  </ItemGroup>
 
 </Project>
