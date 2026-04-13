@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import {
   Card, Typography, Descriptions, Tag, Button, Space, Divider,
-  Timeline, Collapse, Spin, Popconfirm, message, List, Row, Col
+  Timeline, Collapse, Spin, Popconfirm, message, Row, Col
 } from 'antd';
-import { EditOutlined, DeleteOutlined, DownloadOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getDocument, getDocumentHistory, deleteDocument } from '../../api/documents';
-import { deleteFile, getFileUrl } from '../../api/files';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useAuthStore } from '../../store/authStore';
+import FileUploadArea from '../../components/common/FileUploadArea';
 
 const { Title, Text } = Typography;
 
@@ -18,12 +18,6 @@ function formatValue(value: string | null, fieldType: string, lang: string): str
   if (fieldType === 'date') return new Date(value).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US');
   if (fieldType === 'datetime') return new Date(value).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US');
   return value;
-}
-
-function formatBytes(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export default function DocumentViewPage() {
@@ -49,16 +43,6 @@ export default function DocumentViewPage() {
       await deleteDocument(Number(id));
       message.success(t('common.success'));
       navigate('/documents');
-    } catch {
-      message.error(t('common.error'));
-    }
-  };
-
-  const handleDeleteFile = async (fileId: number) => {
-    try {
-      await deleteFile(fileId);
-      message.success(t('common.success'));
-      load();
     } catch {
       message.error(t('common.error'));
     }
@@ -145,36 +129,12 @@ export default function DocumentViewPage() {
 
           {/* Files */}
           <Card title={t('documents.files')}>
-            {doc.files.length === 0 ? (
-              <Text type="secondary">{t('common.noData')}</Text>
-            ) : (
-              <List
-                dataSource={doc.files}
-                renderItem={(f: any) => (
-                  <List.Item
-                    actions={[
-                      <Button key="dl" type="link" icon={<DownloadOutlined />} href={getFileUrl(f.id)} target="_blank">
-                        {t('common.download')}
-                      </Button>,
-                      isManager() && (
-                        <Popconfirm key="del" title={t('files.deleteConfirm')} onConfirm={() => handleDeleteFile(f.id)}>
-                          <Button type="link" danger icon={<DeleteOutlined />}>{t('common.delete')}</Button>
-                        </Popconfirm>
-                      ),
-                    ].filter(Boolean)}
-                  >
-                    <List.Item.Meta
-                      title={f.originalFileName}
-                      description={
-                        <Text type="secondary">
-                          {formatBytes(f.fileSizeBytes)} — {new Date(f.uploadedAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US')} — {language === 'ar' ? f.uploadedByName_AR : f.uploadedByName_EN}
-                        </Text>
-                      }
-                    />
-                  </List.Item>
-                )}
-              />
-            )}
+            <FileUploadArea
+              documentId={Number(id)}
+              existingFiles={doc.files}
+              language={language}
+              onFilesChanged={load}
+            />
           </Card>
         </Col>
 
