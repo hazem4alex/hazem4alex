@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Upload, Button, List, Popconfirm, Typography, message, Space } from 'antd';
-import { UploadOutlined, DeleteOutlined, DownloadOutlined, ScanOutlined } from '@ant-design/icons';
+import { UploadOutlined, DeleteOutlined, DownloadOutlined, ScanOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { uploadFile, deleteFile, downloadFile } from '../../api/files';
+import { uploadFile, deleteFile, downloadFile, openFileInNewTab, isPreviewable } from '../../api/files';
 import ScannerDialog from './ScannerDialog';
 
 const { Text } = Typography;
@@ -95,6 +95,16 @@ export default function FileUploadArea({ documentId, existingFiles = [], languag
         renderItem={(f) => (
           <List.Item
             actions={[
+              isPreviewable(f.mimeType) && (
+                <Button
+                  key="open"
+                  type="link"
+                  icon={<EyeOutlined />}
+                  onClick={() => openFileInNewTab(f.id, f.mimeType).catch(() => message.error(t('common.error')))}
+                >
+                  {t('common.preview')}
+                </Button>
+              ),
               <Button
                 key="dl"
                 type="link"
