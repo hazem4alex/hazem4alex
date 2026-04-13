@@ -29,3 +29,8 @@ public class UpdateUserRequest
     public string Role { get; set; } = "User";
     public bool IsActive { get; set; } = true;
 }
+
+public class ChangePasswordRequest
+{
+    public string NewPassword { get; set; } = string.Empty;
+}

@@ -59,7 +59,11 @@
     },
     "password": "كلمة المرور",
     "passwordHint": "اتركه فارغاً للإبقاء على الكلمة الحالية",
-    "deleteConfirm": "هل تريد تعطيل هذا المستخدم؟"
+    "deleteConfirm": "هل تريد تعطيل هذا المستخدم؟",
+    "changePassword": "تغيير كلمة المرور",
+    "newPassword": "كلمة المرور الجديدة",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "passwordMismatch": "كلمتا المرور غير متطابقتين"
   },
   "categories": {
     "title": "إدارة التصنيفات",

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Table, Button, Space, Tag, Popconfirm, Typography, message } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Tag, Popconfirm, Typography, message, Modal, Form, Input } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { getUsers, deleteUser } from '../../api/users';
+import { getUsers, deleteUser, changeUserPassword } from '../../api/users';
 import { useSettingsStore } from '../../store/settingsStore';
 
 const { Title } = Typography;
@@ -14,6 +14,9 @@ export default function UserListPage() {
   const language = useSettingsStore((s) => s.language);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [changePwdUser, setChangePwdUser] = useState<{ id: number; username: string } | null>(null);
+  const [pwdForm] = Form.useForm();
+  const [pwdLoading, setPwdLoading] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -29,6 +32,25 @@ export default function UserListPage() {
       load();
     } catch {
       message.error(t('common.error'));
+    }
+  };
+
+  const handleChangePassword = async (values: { newPassword: string; confirmPassword: string }) => {
+    if (values.newPassword !== values.confirmPassword) {
+      pwdForm.setFields([{ name: 'confirmPassword', errors: [t('users.passwordMismatch')] }]);
+      return;
+    }
+    if (!changePwdUser) return;
+    setPwdLoading(true);
+    try {
+      await changeUserPassword(changePwdUser.id, values.newPassword);
+      message.success(t('common.success'));
+      setChangePwdUser(null);
+      pwdForm.resetFields();
+    } catch {
+      message.error(t('common.error'));
+    } finally {
+      setPwdLoading(false);
     }
   };
 
@@ -57,6 +79,11 @@ export default function UserListPage() {
       render: (_: any, r: any) => (
         <Space>
           <Button icon={<EditOutlined />} size="small" onClick={() => navigate(`/users/${r.id}/edit`)} />
+          <Button
+            icon={<KeyOutlined />}
+            size="small"
+            onClick={() => { setChangePwdUser({ id: r.id, username: r.username }); pwdForm.resetFields(); }}
+          />
           <Popconfirm title={t('users.deleteConfirm')} onConfirm={() => handleDelete(r.id)}>
             <Button icon={<DeleteOutlined />} size="small" danger />
           </Popconfirm>
@@ -74,6 +101,34 @@ export default function UserListPage() {
         </Button>
       </div>
       <Table rowKey="id" columns={columns} dataSource={users} loading={loading} />
+
+      <Modal
+        open={Boolean(changePwdUser)}
+        title={`${t('users.changePassword')} — ${changePwdUser?.username}`}
+        onCancel={() => { setChangePwdUser(null); pwdForm.resetFields(); }}
+        onOk={() => pwdForm.submit()}
+        okText={t('common.save')}
+        cancelText={t('common.cancel')}
+        confirmLoading={pwdLoading}
+        destroyOnClose
+      >
+        <Form form={pwdForm} layout="vertical" onFinish={handleChangePassword}>
+          <Form.Item
+            name="newPassword"
+            label={t('users.newPassword')}
+            rules={[{ required: true, message: t('common.required') }]}
+          >
+            <Input.Password />
+          </Form.Item>
+          <Form.Item
+            name="confirmPassword"
+            label={t('users.confirmPassword')}
+            rules={[{ required: true, message: t('common.required') }]}
+          >
+            <Input.Password />
+          </Form.Item>
+        </Form>
+      </Modal>
     </>
   );
 }

@@ -54,6 +54,15 @@ public class UserService(AppDbContext db)
         return ToDto(user);
     }
 
+    public async Task<bool> ChangePasswordAsync(int id, string newPassword)
+    {
+        var user = await db.Users.FindAsync(id);
+        if (user is null) return false;
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+        await db.SaveChangesAsync();
+        return true;
+    }
+
     public async Task<bool> DeleteAsync(int id)
     {
         var user = await db.Users.FindAsync(id);

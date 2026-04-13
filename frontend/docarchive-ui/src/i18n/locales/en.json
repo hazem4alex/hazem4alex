@@ -59,7 +59,11 @@
     },
     "password": "Password",
     "passwordHint": "Leave blank to keep current password",
-    "deleteConfirm": "Do you want to deactivate this user?"
+    "deleteConfirm": "Do you want to deactivate this user?",
+    "changePassword": "Change Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "passwordMismatch": "Passwords do not match"
   },
   "categories": {
     "title": "Category Management",
