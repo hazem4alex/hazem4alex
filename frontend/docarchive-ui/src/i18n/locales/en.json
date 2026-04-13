@@ -63,7 +63,10 @@
     "changePassword": "Change Password",
     "newPassword": "New Password",
     "confirmPassword": "Confirm Password",
-    "passwordMismatch": "Passwords do not match"
+    "passwordMismatch": "Passwords do not match",
+    "manageAccess": "Manage Access",
+    "categoryAccess": "Category Access",
+    "noAccessCategories": "No categories assigned — user cannot see any documents."
   },
   "categories": {
     "title": "Category Management",

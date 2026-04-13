@@ -12,3 +12,9 @@ export const changeUserPassword = (id: number, newPassword: string) =>
 // Self-service: any logged-in user changing their own password
 export const changeOwnPassword = (newPassword: string) =>
   client.put('/auth/change-password', { newPassword });
+
+export const getUserCategories = (id: number): Promise<number[]> =>
+  client.get(`/users/${id}/categories`).then((r) => r.data);
+
+export const setUserCategories = (id: number, categoryIds: number[]) =>
+  client.put(`/users/${id}/categories`, { categoryIds });

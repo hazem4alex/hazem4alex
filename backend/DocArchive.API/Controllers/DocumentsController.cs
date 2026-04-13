@@ -45,7 +45,7 @@ public class DocumentsController(DocumentService documentService) : ControllerBa
     public async Task<IActionResult> Search([FromBody] DocumentSearchRequest req)
     {
         var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "User";
-        var result = await documentService.SearchAsync(req, role);
+        var result = await documentService.SearchAsync(req, role, CurrentUserId);
         return Ok(result);
     }
 

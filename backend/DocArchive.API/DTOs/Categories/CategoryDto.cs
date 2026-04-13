@@ -9,7 +9,6 @@ public class CategoryDto
     public string? Description_AR { get; set; }
     public string? Description_EN { get; set; }
     public bool IsActive { get; set; }
-    public bool IsUserAccessible { get; set; }
     public DateTime CreatedAt { get; set; }
     public bool IsLeaf { get; set; } // no children
     public List<CategoryDto> Children { get; set; } = new();
@@ -54,7 +53,6 @@ public class UpdateCategoryRequest
     public string? Description_AR { get; set; }
     public string? Description_EN { get; set; }
     public bool IsActive { get; set; } = true;
-    public bool IsUserAccessible { get; set; } = false;
     public List<SaveFieldRequest> Fields { get; set; } = new();
 }
 

@@ -73,7 +73,6 @@ export default function CategoryFormPage() {
           description_AR: data.description_AR,
           description_EN: data.description_EN,
           isActive: data.isActive,
-          isUserAccessible: data.isUserAccessible,
         });
         const mapped: Field[] = data.fields.map((f: any) => ({
           id: f.id,
@@ -90,7 +89,6 @@ export default function CategoryFormPage() {
     } else {
       const parentId = searchParams.get('parentId');
       if (parentId) form.setFieldValue('parentId', Number(parentId));
-      form.setFieldValue('isUserAccessible', false);
     }
   }, [id]);
 
@@ -199,9 +197,6 @@ export default function CategoryFormPage() {
             <Switch checkedChildren={t('common.active')} unCheckedChildren={t('common.inactive')} />
           </Form.Item>
         )}
-        <Form.Item name="isUserAccessible" label={t('categories.userAccess')} valuePropName="checked">
-          <Switch checkedChildren={t('common.yes')} unCheckedChildren={t('common.no')} />
-        </Form.Item>
 
         {/* Field Builder — only for leaf categories */}
         <Divider />

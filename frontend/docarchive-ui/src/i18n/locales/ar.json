@@ -63,7 +63,10 @@
     "changePassword": "تغيير كلمة المرور",
     "newPassword": "كلمة المرور الجديدة",
     "confirmPassword": "تأكيد كلمة المرور",
-    "passwordMismatch": "كلمتا المرور غير متطابقتين"
+    "passwordMismatch": "كلمتا المرور غير متطابقتين",
+    "manageAccess": "إدارة الصلاحيات",
+    "categoryAccess": "صلاحيات التصنيف",
+    "noAccessCategories": "لا توجد تصنيفات مخصصة — لن يتمكن المستخدم من رؤية أي وثائق."
   },
   "categories": {
     "title": "إدارة التصنيفات",

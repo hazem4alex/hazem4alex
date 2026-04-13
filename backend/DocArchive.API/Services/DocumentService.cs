@@ -111,7 +111,7 @@ public class DocumentService(AppDbContext db)
         return true;
     }
 
-    public async Task<PagedResult<DocumentDto>> SearchAsync(DocumentSearchRequest req, string role = "Admin")
+    public async Task<PagedResult<DocumentDto>> SearchAsync(DocumentSearchRequest req, string role = "Admin", int userId = 0)
     {
         var query = db.Documents
             .Include(d => d.Category)
@@ -124,9 +124,15 @@ public class DocumentService(AppDbContext db)
             .Where(d => d.Status != "Deleted")
             .AsQueryable();
 
-        // Users can only see documents in categories marked as user-accessible
-        if (role == "User")
-            query = query.Where(d => d.Category != null && d.Category.IsUserAccessible);
+        // Users can only see documents in categories they have explicit access to
+        if (role == "User" && userId > 0)
+        {
+            var accessibleIds = await db.UserCategoryAccess
+                .Where(a => a.UserId == userId)
+                .Select(a => a.CategoryId)
+                .ToListAsync();
+            query = query.Where(d => accessibleIds.Contains(d.CategoryId));
+        }
 
         if (req.CategoryId.HasValue)
             query = query.Where(d => d.CategoryId == req.CategoryId.Value);

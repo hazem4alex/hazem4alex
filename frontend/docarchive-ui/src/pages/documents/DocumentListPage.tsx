@@ -1,8 +1,10 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   Table, Button, Input, Space, Select, DatePicker, Typography,
-  Collapse, Tag, Popconfirm, message, Row, Col, TreeSelect, Divider
+  Tag, Popconfirm, message, Row, Col, TreeSelect, Divider
 } from 'antd';
+import type { InputRef, TableColumnType } from 'antd';
+import type { FilterDropdownProps } from 'antd/es/table/interface';
 import {
   PlusOutlined, SearchOutlined, EyeOutlined, EditOutlined, DeleteOutlined,
   FilterOutlined, FileTextOutlined
@@ -46,6 +48,43 @@ const statusConfig: Record<string, { color: string; bg: string; border: string }
   Archived: { color: '#92400E', bg: '#FEF3C7', border: '#FCD34D' },
   Deleted:  { color: '#991B1B', bg: '#FEE2E2', border: '#FCA5A5' },
 };
+
+// Reusable column text-search filter
+function useColumnSearch(dataIndex: string): TableColumnType<any> {
+  const searchInput = useRef<InputRef>(null);
+  return {
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: FilterDropdownProps) => (
+      <div style={{ padding: 8 }} onKeyDown={(e) => e.stopPropagation()}>
+        <Input
+          ref={searchInput}
+          placeholder="Search..."
+          value={selectedKeys[0]}
+          onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => confirm()}
+          style={{ display: 'block', marginBottom: 8 }}
+        />
+        <Space>
+          <Button type="primary" icon={<SearchOutlined />} size="small" onClick={() => confirm()}>
+            Search
+          </Button>
+          <Button size="small" onClick={() => { clearFilters?.(); confirm(); }}>
+            Reset
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: (filtered: boolean) => (
+      <SearchOutlined style={{ color: filtered ? AMBER : undefined }} />
+    ),
+    onFilter: (value: any, record: any) => {
+      const cell = record[dataIndex];
+      return String(cell ?? '').toLowerCase().includes(String(value).toLowerCase());
+    },
+    onFilterDropdownOpenChange: (visible: boolean) => {
+      if (visible) setTimeout(() => searchInput.current?.select(), 100);
+    },
+  };
+}
 
 export default function DocumentListPage() {
   const { t } = useTranslation();
@@ -126,35 +165,36 @@ export default function DocumentListPage() {
     }
   };
 
-  const columns = [
+  // Column search filters
+  const titleSearch    = useColumnSearch(language === 'ar' ? 'title' : 'title');
+  const categorySearch = useColumnSearch(language === 'ar' ? 'categoryName_AR' : 'categoryName_EN');
+  const addedBySearch  = useColumnSearch(language === 'ar' ? 'addedByName_AR' : 'addedByName_EN');
+
+  const columns: TableColumnType<any>[] = [
     {
       title: t('documents.title_field'),
-      dataIndex: 'title',
       key: 'title',
-      render: (v: string, r: any) => (
+      ...titleSearch,
+      render: (_, r: any) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
-            width: 30, height: 30, borderRadius: 5,
-            background: '#F0F4FF',
-            border: '1px solid #D0D9EE',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
+            width: 28, height: 28, borderRadius: 5,
+            background: '#F0F4FF', border: '1px solid #D0D9EE',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
-            <FileTextOutlined style={{ fontSize: 13, color: NAVY }} />
+            <FileTextOutlined style={{ fontSize: 12, color: NAVY }} />
           </div>
-          <Button
-            type="link"
-            onClick={() => navigate(`/documents/${r.id}`)}
-            style={{ padding: 0, height: 'auto', color: NAVY, fontWeight: 600, fontSize: 13 }}
-          >
-            {v}
+          <Button type="link" onClick={() => navigate(`/documents/${r.id}`)}
+            style={{ padding: 0, height: 'auto', color: NAVY, fontWeight: 600, fontSize: 13 }}>
+            {r.title}
           </Button>
         </div>
       ),
     },
     {
       title: t('documents.category'),
-      key: 'cat',
+      key: 'category',
+      ...categorySearch,
       render: (_: any, r: any) => (
         <Text style={{ fontSize: 13, color: 'var(--vault-muted)' }}>
           {language === 'ar' ? r.categoryName_AR : r.categoryName_EN}
@@ -174,6 +214,7 @@ export default function DocumentListPage() {
     {
       title: t('documents.addedBy'),
       key: 'addedBy',
+      ...addedBySearch,
       render: (_: any, r: any) => (
         <Text style={{ fontSize: 13 }}>
           {language === 'ar' ? r.addedByName_AR : r.addedByName_EN}
@@ -184,19 +225,16 @@ export default function DocumentListPage() {
       title: t('common.status'),
       dataIndex: 'status',
       key: 'status',
+      filters: ['Active', 'Archived', 'Deleted'].map((s) => ({ text: t(`documents.status.${s}`), value: s })),
+      onFilter: (value: any, r: any) => r.status === value,
+      filterIcon: (filtered: boolean) => <FilterOutlined style={{ color: filtered ? AMBER : undefined }} />,
       render: (v: string) => {
         const cfg = statusConfig[v] ?? { color: '#555', bg: '#eee', border: '#ccc' };
         return (
           <span style={{
-            display: 'inline-block',
-            padding: '2px 10px',
-            borderRadius: 20,
-            fontSize: 11,
-            fontWeight: 600,
-            letterSpacing: '0.04em',
-            color: cfg.color,
-            background: cfg.bg,
-            border: `1px solid ${cfg.border}`,
+            display: 'inline-block', padding: '2px 10px', borderRadius: 20,
+            fontSize: 11, fontWeight: 600, letterSpacing: '0.04em',
+            color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.border}`,
           }}>
             {t(`documents.status.${v}`)}
           </span>
@@ -209,16 +247,10 @@ export default function DocumentListPage() {
       width: 120,
       render: (_: any, r: any) => (
         <Space size={4}>
-          <Button
-            icon={<EyeOutlined />} size="small"
-            onClick={() => navigate(`/documents/${r.id}`)}
-            style={{ border: '1px solid var(--vault-border)', color: NAVY }}
-          />
-          <Button
-            icon={<EditOutlined />} size="small"
-            onClick={() => navigate(`/documents/${r.id}/edit`)}
-            style={{ border: '1px solid var(--vault-border)', color: NAVY }}
-          />
+          <Button icon={<EyeOutlined />} size="small" onClick={() => navigate(`/documents/${r.id}`)}
+            style={{ border: '1px solid var(--vault-border)', color: NAVY }} />
+          <Button icon={<EditOutlined />} size="small" onClick={() => navigate(`/documents/${r.id}/edit`)}
+            style={{ border: '1px solid var(--vault-border)', color: NAVY }} />
           {isManager() && (
             <Popconfirm title={t('documents.deleteConfirm')} onConfirm={() => handleDelete(r.id)}>
               <Button icon={<DeleteOutlined />} size="small" danger />
@@ -241,123 +273,113 @@ export default function DocumentListPage() {
             {results.totalCount} {language === 'ar' ? 'وثيقة' : 'records'}
           </Text>
         </div>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => navigate('/documents/add')}
-          style={{ background: NAVY, borderColor: NAVY, fontWeight: 600 }}
-        >
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/documents/add')}
+          style={{ background: NAVY, borderColor: NAVY, fontWeight: 600 }}>
           {t('documents.addDocument')}
         </Button>
       </div>
 
-      {/* Search / Filter panel */}
-      <Collapse
-        style={{ marginBottom: 16, borderRadius: 8, border: '1px solid var(--vault-border)' }}
-        expandIcon={({ isActive }) => <FilterOutlined rotate={isActive ? 90 : 0} style={{ color: AMBER }} />}
-        items={[{
-          key: 'search',
-          label: (
-            <span style={{ fontWeight: 600, color: NAVY, fontSize: 13 }}>
-              {t('documents.searchDocuments')}
-            </span>
-          ),
-          children: (
-            <Row gutter={[12, 12]}>
-              <Col xs={24} md={8}>
+      {/* Always-visible search panel */}
+      <div style={{
+        background: '#fff',
+        border: '1px solid var(--vault-border)',
+        borderRadius: 8,
+        padding: '16px 20px',
+        marginBottom: 16,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+          <FilterOutlined style={{ color: AMBER }} />
+          <span style={{ fontWeight: 600, color: NAVY, fontSize: 13 }}>{t('documents.searchDocuments')}</span>
+        </div>
+        <Row gutter={[12, 12]}>
+          <Col xs={24} md={8}>
+            <Input
+              placeholder={t('documents.titleContains')}
+              value={titleFilter}
+              onChange={(e) => setTitleFilter(e.target.value)}
+              allowClear
+              prefix={<SearchOutlined style={{ color: 'var(--vault-muted)' }} />}
+              style={{ borderRadius: 6 }}
+            />
+          </Col>
+          <Col xs={24} md={8}>
+            <TreeSelect
+              treeData={buildTreeSelectData(tree, language)}
+              onChange={handleCatChange}
+              placeholder={t('documents.category')}
+              allowClear
+              style={{ width: '100%' }}
+              treeDefaultExpandAll
+            />
+          </Col>
+          <Col xs={24} md={8}>
+            <Select
+              placeholder={t('documents.addedBy')}
+              allowClear
+              style={{ width: '100%' }}
+              options={users.map((u) => ({ value: u.id, label: language === 'ar' ? u.fullName_AR : u.fullName_EN }))}
+              onChange={setUserFilter}
+            />
+          </Col>
+          <Col xs={24} md={12}>
+            <RangePicker style={{ width: '100%' }} onChange={(v) => setDateRange(v as any)} />
+          </Col>
+          <Col xs={24} md={6}>
+            <Select
+              placeholder={t('common.status')}
+              allowClear
+              style={{ width: '100%' }}
+              options={['Active', 'Archived'].map((s) => ({ value: s, label: t(`documents.status.${s}`) }))}
+              onChange={setStatusFilter}
+            />
+          </Col>
+
+          {fieldFilters.map((ff, i) => (
+            <Col xs={24} key={i}>
+              <Space wrap>
+                <Select
+                  value={ff.fieldId}
+                  style={{ width: 180 }}
+                  onChange={(v) => updateFieldFilter(i, 'fieldId', v)}
+                  options={selectedCat?.fields.map((f) => ({ value: f.id, label: language === 'ar' ? f.label_AR : f.label_EN })) ?? []}
+                />
+                <Select
+                  value={ff.operator}
+                  style={{ width: 130 }}
+                  onChange={(v) => updateFieldFilter(i, 'operator', v)}
+                  options={['contains', 'equals', 'startsWith'].map((o) => ({ value: o, label: t(`documents.operator.${o}`) }))}
+                />
                 <Input
-                  placeholder={t('documents.titleContains')}
-                  value={titleFilter}
-                  onChange={(e) => setTitleFilter(e.target.value)}
-                  allowClear
-                  prefix={<SearchOutlined style={{ color: 'var(--vault-muted)' }} />}
-                  style={{ borderRadius: 6 }}
+                  value={ff.value}
+                  onChange={(e) => updateFieldFilter(i, 'value', e.target.value)}
+                  style={{ width: 180 }}
                 />
-              </Col>
-              <Col xs={24} md={8}>
-                <TreeSelect
-                  treeData={buildTreeSelectData(tree, language)}
-                  onChange={handleCatChange}
-                  placeholder={t('documents.category')}
-                  allowClear
-                  style={{ width: '100%' }}
-                  treeDefaultExpandAll
-                />
-              </Col>
-              <Col xs={24} md={8}>
-                <Select
-                  placeholder={t('documents.addedBy')}
-                  allowClear
-                  style={{ width: '100%' }}
-                  options={users.map((u) => ({ value: u.id, label: language === 'ar' ? u.fullName_AR : u.fullName_EN }))}
-                  onChange={setUserFilter}
-                />
-              </Col>
-              <Col xs={24} md={12}>
-                <RangePicker style={{ width: '100%' }} onChange={(v) => setDateRange(v as any)} />
-              </Col>
-              <Col xs={24} md={6}>
-                <Select
-                  placeholder={t('common.status')}
-                  allowClear
-                  style={{ width: '100%' }}
-                  options={['Active', 'Archived'].map((s) => ({ value: s, label: t(`documents.status.${s}`) }))}
-                  onChange={setStatusFilter}
-                />
-              </Col>
-
-              {fieldFilters.map((ff, i) => (
-                <Col xs={24} key={i}>
-                  <Space wrap>
-                    <Select
-                      value={ff.fieldId}
-                      style={{ width: 180 }}
-                      onChange={(v) => updateFieldFilter(i, 'fieldId', v)}
-                      options={selectedCat?.fields.map((f) => ({ value: f.id, label: language === 'ar' ? f.label_AR : f.label_EN })) ?? []}
-                    />
-                    <Select
-                      value={ff.operator}
-                      style={{ width: 130 }}
-                      onChange={(v) => updateFieldFilter(i, 'operator', v)}
-                      options={['contains', 'equals', 'startsWith'].map((o) => ({ value: o, label: t(`documents.operator.${o}`) }))}
-                    />
-                    <Input
-                      value={ff.value}
-                      onChange={(e) => updateFieldFilter(i, 'value', e.target.value)}
-                      style={{ width: 180 }}
-                    />
-                    <Button danger size="small" onClick={() => setFieldFilters((prev) => prev.filter((_, j) => j !== i))}>
-                      {t('common.delete')}
-                    </Button>
-                  </Space>
-                </Col>
-              ))}
-
-              {selectedCat && selectedCat.fields.length > 0 && (
-                <Col xs={24}>
-                  <Button size="small" onClick={addFieldFilter} style={{ borderColor: AMBER, color: AMBER }}>
-                    + {t('documents.addFilter')}
-                  </Button>
-                </Col>
-              )}
-
-              <Col xs={24}>
-                <Divider style={{ margin: '4px 0 8px' }} />
-                <Button
-                  type="primary"
-                  icon={<SearchOutlined />}
-                  onClick={() => doSearch(1)}
-                  style={{ background: NAVY, borderColor: NAVY, fontWeight: 600 }}
-                >
-                  {t('common.search')}
+                <Button danger size="small" onClick={() => setFieldFilters((prev) => prev.filter((_, j) => j !== i))}>
+                  {t('common.delete')}
                 </Button>
-              </Col>
-            </Row>
-          ),
-        }]}
-      />
+              </Space>
+            </Col>
+          ))}
 
-      {/* Table */}
+          {selectedCat && selectedCat.fields.length > 0 && (
+            <Col xs={24}>
+              <Button size="small" onClick={addFieldFilter} style={{ borderColor: AMBER, color: AMBER }}>
+                + {t('documents.addFilter')}
+              </Button>
+            </Col>
+          )}
+
+          <Col xs={24}>
+            <Divider style={{ margin: '4px 0 8px' }} />
+            <Button type="primary" icon={<SearchOutlined />} onClick={() => doSearch(1)}
+              style={{ background: NAVY, borderColor: NAVY, fontWeight: 600 }}>
+              {t('common.search')}
+            </Button>
+          </Col>
+        </Row>
+      </div>
+
+      {/* Table with per-column filters */}
       <Table
         rowKey="id"
         columns={columns}

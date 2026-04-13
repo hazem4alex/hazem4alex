@@ -16,7 +16,7 @@ public class CategoriesController(CategoryService categoryService) : ControllerB
     public async Task<IActionResult> GetTree()
     {
         var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "User";
-        return Ok(await categoryService.GetTreeAsync(role));
+        return Ok(await categoryService.GetTreeAsync(role, CurrentUserId));
     }
 
     [HttpGet("{id:int}")]

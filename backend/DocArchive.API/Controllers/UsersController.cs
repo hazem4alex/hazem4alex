@@ -46,6 +46,17 @@ public class UsersController(UserService userService) : ControllerBase
         return ok ? NoContent() : NotFound();
     }
 
+    [HttpGet("{id:int}/categories")]
+    public async Task<IActionResult> GetCategories(int id)
+        => Ok(await userService.GetUserCategoriesAsync(id));
+
+    [HttpPut("{id:int}/categories")]
+    public async Task<IActionResult> SetCategories(int id, [FromBody] SetUserCategoriesRequest req)
+    {
+        await userService.SetUserCategoriesAsync(id, req.CategoryIds);
+        return NoContent();
+    }
+
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {

@@ -14,6 +14,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<DocumentFile> DocumentFiles => Set<DocumentFile>();
     public DbSet<DocumentFileContent> DocumentFileContents => Set<DocumentFileContent>();
     public DbSet<DocumentHistory> DocumentHistory => Set<DocumentHistory>();
+    public DbSet<UserCategoryAccess> UserCategoryAccess => Set<UserCategoryAccess>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -85,6 +86,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             e.HasKey(x => x.FileId);
             e.HasOne(x => x.File).WithOne(x => x.Content).HasForeignKey<DocumentFileContent>(x => x.FileId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // UserCategoryAccess
+        modelBuilder.Entity<UserCategoryAccess>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.UserId, x.CategoryId }).IsUnique();
+            e.HasOne(x => x.User).WithMany(x => x.CategoryAccess).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Category).WithMany().HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // DocumentHistory

@@ -34,3 +34,8 @@ public class ChangePasswordRequest
 {
     public string NewPassword { get; set; } = string.Empty;
 }
+
+public class SetUserCategoriesRequest
+{
+    public List<int> CategoryIds { get; set; } = new();
+}

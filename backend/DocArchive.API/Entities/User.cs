@@ -16,4 +16,5 @@ public class User
     public ICollection<Category> CreatedCategories { get; set; } = new List<Category>();
     public ICollection<Document> AddedDocuments { get; set; } = new List<Document>();
     public ICollection<DocumentHistory> HistoryEntries { get; set; } = new List<DocumentHistory>();
+    public ICollection<UserCategoryAccess> CategoryAccess { get; set; } = new List<UserCategoryAccess>();
 }

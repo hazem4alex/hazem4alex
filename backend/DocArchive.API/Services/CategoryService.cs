@@ -7,16 +7,22 @@ namespace DocArchive.API.Services;
 
 public class CategoryService(AppDbContext db)
 {
-    public async Task<List<CategoryDto>> GetTreeAsync(string role = "Admin")
+    public async Task<List<CategoryDto>> GetTreeAsync(string role = "Admin", int userId = 0)
     {
         var query = db.Categories
             .Include(c => c.Fields.Where(f => f.IsActive))
                 .ThenInclude(f => f.Options.OrderBy(o => o.DisplayOrder))
             .Where(c => c.IsActive);
 
-        // Users only see categories explicitly marked as accessible
-        if (role == "User")
-            query = query.Where(c => c.IsUserAccessible);
+        // Users only see categories they have explicit access to
+        if (role == "User" && userId > 0)
+        {
+            var accessibleIds = await db.UserCategoryAccess
+                .Where(a => a.UserId == userId)
+                .Select(a => a.CategoryId)
+                .ToListAsync();
+            query = query.Where(c => accessibleIds.Contains(c.Id));
+        }
 
         var all = await query.OrderBy(c => c.Name_EN).ToListAsync();
         var lookup = all.ToLookup(c => c.ParentId);
@@ -37,7 +43,6 @@ public class CategoryService(AppDbContext db)
                 Description_AR = c.Description_AR,
                 Description_EN = c.Description_EN,
                 IsActive = c.IsActive,
-                IsUserAccessible = c.IsUserAccessible,
                 CreatedAt = c.CreatedAt,
                 IsLeaf = !children.Any(),
                 Children = children,
@@ -68,7 +73,6 @@ public class CategoryService(AppDbContext db)
             Description_AR = c.Description_AR,
             Description_EN = c.Description_EN,
             IsActive = c.IsActive,
-            IsUserAccessible = c.IsUserAccessible,
             CreatedAt = c.CreatedAt,
             IsLeaf = !c.Children.Any(ch => ch.IsActive),
             Fields = c.Fields.OrderBy(f => f.DisplayOrder).Select(MapField).ToList()
@@ -105,7 +109,6 @@ public class CategoryService(AppDbContext db)
         cat.Description_AR = req.Description_AR;
         cat.Description_EN = req.Description_EN;
         cat.IsActive = req.IsActive;
-        cat.IsUserAccessible = req.IsUserAccessible;
 
         // Sync fields
         var existingFieldIds = cat.Fields.Select(f => f.Id).ToHashSet();

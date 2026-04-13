@@ -54,6 +54,23 @@ public class UserService(AppDbContext db)
         return ToDto(user);
     }
 
+    public async Task<List<int>> GetUserCategoriesAsync(int userId)
+    {
+        return await db.UserCategoryAccess
+            .Where(a => a.UserId == userId)
+            .Select(a => a.CategoryId)
+            .ToListAsync();
+    }
+
+    public async Task SetUserCategoriesAsync(int userId, List<int> categoryIds)
+    {
+        var existing = await db.UserCategoryAccess.Where(a => a.UserId == userId).ToListAsync();
+        db.UserCategoryAccess.RemoveRange(existing);
+        foreach (var catId in categoryIds.Distinct())
+            db.UserCategoryAccess.Add(new Entities.UserCategoryAccess { UserId = userId, CategoryId = catId });
+        await db.SaveChangesAsync();
+    }
+
     public async Task<bool> ChangePasswordAsync(int id, string newPassword)
     {
         var user = await db.Users.FindAsync(id);
