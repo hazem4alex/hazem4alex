@@ -6,10 +6,51 @@
     <title>نظام أرشفة الوثائق | Document Archiving System</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&family=EB+Garamond:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <style>
+      :root {
+        --vault-navy:       #0D1B2A;
+        --vault-navy-mid:   #162032;
+        --vault-navy-light: #1E2E42;
+        --vault-amber:      #C9973A;
+        --vault-amber-soft: #F5E6C8;
+        --vault-surface:    #F2F4F8;
+        --vault-border:     #DDE1EA;
+        --vault-text:       #0D1B2A;
+        --vault-muted:      #5A6A7E;
+      }
       * { box-sizing: border-box; }
-      body { margin: 0; font-family: 'Cairo', -apple-system, BlinkMacSystemFont, sans-serif; }
+      body {
+        margin: 0;
+        font-family: 'IBM Plex Sans', 'Cairo', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--vault-surface);
+        color: var(--vault-text);
+      }
+      /* Ant Design overrides */
+      .ant-layout { background: var(--vault-surface) !important; }
+      .ant-layout-sider { box-shadow: 2px 0 12px rgba(0,0,0,0.18) !important; }
+      .ant-menu-dark { background: transparent !important; }
+      .ant-menu-dark .ant-menu-item-selected {
+        background: rgba(201,151,58,0.15) !important;
+        border-left: 3px solid var(--vault-amber) !important;
+      }
+      .ant-menu-dark .ant-menu-item:hover { background: rgba(255,255,255,0.06) !important; }
+      .ant-table-thead > tr > th {
+        background: var(--vault-navy) !important;
+        color: #ffffff !important;
+        font-weight: 600;
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        border-bottom: none !important;
+      }
+      .ant-table-thead > tr > th .ant-table-filter-trigger { color: rgba(255,255,255,0.6) !important; }
+      .ant-table-thead > tr > th .ant-table-filter-trigger.active { color: var(--vault-amber) !important; }
+      .ant-table-row:hover > td { background: var(--vault-amber-soft) !important; }
+      .ant-card { border: 1px solid var(--vault-border) !important; border-radius: 6px !important; }
+      .ant-btn-primary { background: var(--vault-navy) !important; border-color: var(--vault-navy) !important; }
+      .ant-btn-primary:hover { background: var(--vault-navy-light) !important; border-color: var(--vault-navy-light) !important; }
+      .ant-tag-blue { background: var(--vault-amber-soft) !important; color: var(--vault-amber) !important; border-color: var(--vault-amber) !important; }
     </style>
   </head>
   <body>

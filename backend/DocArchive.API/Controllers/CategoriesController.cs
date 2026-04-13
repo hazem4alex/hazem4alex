@@ -13,7 +13,11 @@ public class CategoriesController(CategoryService categoryService) : ControllerB
     private int CurrentUserId => int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
 
     [HttpGet("tree")]
-    public async Task<IActionResult> GetTree() => Ok(await categoryService.GetTreeAsync());
+    public async Task<IActionResult> GetTree()
+    {
+        var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "User";
+        return Ok(await categoryService.GetTreeAsync(role));
+    }
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)

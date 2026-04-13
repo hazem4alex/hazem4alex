@@ -7,15 +7,18 @@ namespace DocArchive.API.Services;
 
 public class CategoryService(AppDbContext db)
 {
-    public async Task<List<CategoryDto>> GetTreeAsync()
+    public async Task<List<CategoryDto>> GetTreeAsync(string role = "Admin")
     {
-        var all = await db.Categories
+        var query = db.Categories
             .Include(c => c.Fields.Where(f => f.IsActive))
                 .ThenInclude(f => f.Options.OrderBy(o => o.DisplayOrder))
-            .Where(c => c.IsActive)
-            .OrderBy(c => c.Name_EN)
-            .ToListAsync();
+            .Where(c => c.IsActive);
 
+        // Users only see categories explicitly marked as accessible
+        if (role == "User")
+            query = query.Where(c => c.IsUserAccessible);
+
+        var all = await query.OrderBy(c => c.Name_EN).ToListAsync();
         var lookup = all.ToLookup(c => c.ParentId);
         return BuildTree(lookup, null);
     }
@@ -34,6 +37,7 @@ public class CategoryService(AppDbContext db)
                 Description_AR = c.Description_AR,
                 Description_EN = c.Description_EN,
                 IsActive = c.IsActive,
+                IsUserAccessible = c.IsUserAccessible,
                 CreatedAt = c.CreatedAt,
                 IsLeaf = !children.Any(),
                 Children = children,
@@ -64,6 +68,7 @@ public class CategoryService(AppDbContext db)
             Description_AR = c.Description_AR,
             Description_EN = c.Description_EN,
             IsActive = c.IsActive,
+            IsUserAccessible = c.IsUserAccessible,
             CreatedAt = c.CreatedAt,
             IsLeaf = !c.Children.Any(ch => ch.IsActive),
             Fields = c.Fields.OrderBy(f => f.DisplayOrder).Select(MapField).ToList()
@@ -100,6 +105,7 @@ public class CategoryService(AppDbContext db)
         cat.Description_AR = req.Description_AR;
         cat.Description_EN = req.Description_EN;
         cat.IsActive = req.IsActive;
+        cat.IsUserAccessible = req.IsUserAccessible;
 
         // Sync fields
         var existingFieldIds = cat.Fields.Select(f => f.Id).ToHashSet();

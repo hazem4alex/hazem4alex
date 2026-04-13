@@ -95,7 +95,10 @@
     "optionLabelAR": "العرض بالعربية",
     "optionLabelEN": "العرض بالإنجليزية",
     "leafOnly": "الحقول تُضاف فقط للتصنيفات النهائية (بدون تصنيفات فرعية)",
-    "deleteConfirm": "هل تريد حذف هذا التصنيف؟"
+    "deleteConfirm": "هل تريد حذف هذا التصنيف؟",
+    "userAccess": "متاح للمستخدمين",
+    "userAccessYes": "نعم",
+    "userAccessNo": "لا"
   },
   "documents": {
     "title": "الوثائق",

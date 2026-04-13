@@ -9,6 +9,7 @@ public class Category
     public string? Description_AR { get; set; }
     public string? Description_EN { get; set; }
     public bool IsActive { get; set; } = true;
+    public bool IsUserAccessible { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public int CreatedBy { get; set; }
 

@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Tree, Button, Typography, Space, Tag, Spin, Empty } from 'antd';
-import { PlusOutlined, EditOutlined, FolderOutlined, FileOutlined } from '@ant-design/icons';
+import { useEffect, useRef, useState } from 'react';
+import { Table, Button, Space, Tag, Typography, Spin, Empty, Input } from 'antd';
+import type { InputRef, TableColumnType } from 'antd';
+import type { FilterDropdownProps } from 'antd/es/table/interface';
+import { PlusOutlined, EditOutlined, SearchOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getCategoryTree } from '../../api/categories';
@@ -12,52 +14,157 @@ interface CategoryNode {
   id: number;
   name_AR: string;
   name_EN: string;
+  parentId: number | null;
   isLeaf: boolean;
   isActive: boolean;
+  isUserAccessible: boolean;
   children: CategoryNode[];
 }
 
-function buildTreeData(nodes: CategoryNode[], language: string, navigate: Function): any[] {
-  return nodes.map((node) => ({
-    key: String(node.id),
-    title: (
-      <Space>
-        <span>{language === 'ar' ? node.name_AR : node.name_EN}</span>
-        {!node.isActive && <Tag color="red">Inactive</Tag>}
-        <Button
-          type="link"
-          size="small"
-          icon={<EditOutlined />}
-          onClick={(e) => { e.stopPropagation(); navigate(`/categories/${node.id}/edit`); }}
-          style={{ padding: 0, height: 'auto' }}
+interface FlatRow {
+  id: number;
+  name_AR: string;
+  name_EN: string;
+  parentName_AR: string;
+  parentName_EN: string;
+  isLeaf: boolean;
+  isActive: boolean;
+  isUserAccessible: boolean;
+  depth: number;
+}
+
+function flatten(nodes: CategoryNode[], parentName_AR = '', parentName_EN = '', depth = 0): FlatRow[] {
+  return nodes.flatMap((n) => [
+    {
+      id: n.id,
+      name_AR: n.name_AR,
+      name_EN: n.name_EN,
+      parentName_AR,
+      parentName_EN,
+      isLeaf: n.isLeaf,
+      isActive: n.isActive,
+      isUserAccessible: n.isUserAccessible,
+      depth,
+    },
+    ...flatten(n.children, n.name_AR, n.name_EN, depth + 1),
+  ]);
+}
+
+function useSearchFilter(dataIndex: keyof FlatRow): TableColumnType<FlatRow> {
+  const searchInput = useRef<InputRef>(null);
+
+  const handleSearch = (confirm: FilterDropdownProps['confirm']) => confirm();
+  const handleReset = (clearFilters: (() => void) | undefined, confirm: FilterDropdownProps['confirm']) => {
+    clearFilters?.();
+    confirm();
+  };
+
+  return {
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+      <div style={{ padding: 8 }} onKeyDown={(e) => e.stopPropagation()}>
+        <Input
+          ref={searchInput}
+          placeholder="Search..."
+          value={selectedKeys[0]}
+          onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => handleSearch(confirm)}
+          style={{ display: 'block', marginBottom: 8 }}
         />
-        <Button
-          type="link"
-          size="small"
-          icon={<PlusOutlined />}
-          onClick={(e) => { e.stopPropagation(); navigate(`/categories/new?parentId=${node.id}`); }}
-          style={{ padding: 0, height: 'auto' }}
-        />
-      </Space>
+        <Space>
+          <Button type="primary" icon={<SearchOutlined />} size="small" onClick={() => handleSearch(confirm)}>
+            Search
+          </Button>
+          <Button size="small" onClick={() => handleReset(clearFilters, confirm)}>
+            Reset
+          </Button>
+        </Space>
+      </div>
     ),
-    icon: node.isLeaf ? <FileOutlined /> : <FolderOutlined />,
-    isLeaf: node.isLeaf,
-    children: buildTreeData(node.children, language, navigate),
-  }));
+    filterIcon: (filtered: boolean) => (
+      <SearchOutlined style={{ color: filtered ? '#1677ff' : undefined }} />
+    ),
+    onFilter: (value, record) => {
+      const cell = record[dataIndex];
+      return String(cell ?? '').toLowerCase().includes(String(value).toLowerCase());
+    },
+    onFilterDropdownOpenChange: (visible) => {
+      if (visible) setTimeout(() => searchInput.current?.select(), 100);
+    },
+  };
 }
 
 export default function CategoryListPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const language = useSettingsStore((s) => s.language);
-  const [tree, setTree] = useState<CategoryNode[]>([]);
+  const [rows, setRows] = useState<FlatRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getCategoryTree().then(setTree).finally(() => setLoading(false));
+    getCategoryTree()
+      .then((tree: CategoryNode[]) => setRows(flatten(tree)))
+      .finally(() => setLoading(false));
   }, []);
 
-  const treeData = buildTreeData(tree, language, navigate);
+  const nameFilter = useSearchFilter(language === 'ar' ? 'name_AR' : 'name_EN');
+  const parentFilter = useSearchFilter(language === 'ar' ? 'parentName_AR' : 'parentName_EN');
+
+  const columns: TableColumnType<FlatRow>[] = [
+    {
+      title: language === 'ar' ? t('categories.nameAR') : t('categories.nameEN'),
+      key: 'name',
+      render: (_, r) => (
+        <span style={{ paddingLeft: r.depth * 20 }}>
+          {language === 'ar' ? r.name_AR : r.name_EN}
+        </span>
+      ),
+      ...nameFilter,
+    },
+    {
+      title: t('categories.parent'),
+      key: 'parent',
+      render: (_, r) => language === 'ar' ? r.parentName_AR : r.parentName_EN || '—',
+      ...parentFilter,
+    },
+    {
+      title: t('common.status'),
+      dataIndex: 'isActive',
+      key: 'isActive',
+      filters: [
+        { text: t('common.active'), value: true },
+        { text: t('common.inactive'), value: false },
+      ],
+      onFilter: (value, r) => r.isActive === value,
+      render: (v: boolean) => <Tag color={v ? 'green' : 'red'}>{v ? t('common.active') : t('common.inactive')}</Tag>,
+    },
+    {
+      title: t('categories.userAccess'),
+      dataIndex: 'isUserAccessible',
+      key: 'isUserAccessible',
+      filters: [
+        { text: t('common.yes'), value: true },
+        { text: t('common.no'), value: false },
+      ],
+      onFilter: (value, r) => r.isUserAccessible === value,
+      render: (v: boolean) => <Tag color={v ? 'blue' : 'default'}>{v ? t('common.yes') : t('common.no')}</Tag>,
+    },
+    {
+      title: t('common.actions'),
+      key: 'actions',
+      render: (_, r) => (
+        <Space>
+          <Button icon={<EditOutlined />} size="small" onClick={() => navigate(`/categories/${r.id}/edit`)} />
+          <Button
+            icon={<PlusOutlined />}
+            size="small"
+            onClick={() => navigate(`/categories/new?parentId=${r.id}`)}
+          />
+        </Space>
+      ),
+    },
+  ];
+
+  if (loading) return <Spin />;
 
   return (
     <>
@@ -68,16 +175,15 @@ export default function CategoryListPage() {
         </Button>
       </div>
 
-      {loading ? (
-        <Spin />
-      ) : treeData.length === 0 ? (
+      {rows.length === 0 ? (
         <Empty description={t('common.noData')} />
       ) : (
-        <Tree
-          showIcon
-          defaultExpandAll
-          treeData={treeData}
-          style={{ fontSize: 15 }}
+        <Table
+          rowKey="id"
+          columns={columns}
+          dataSource={rows}
+          size="small"
+          pagination={{ pageSize: 20, showSizeChanger: false }}
         />
       )}
     </>

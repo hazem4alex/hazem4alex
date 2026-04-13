@@ -111,7 +111,7 @@ public class DocumentService(AppDbContext db)
         return true;
     }
 
-    public async Task<PagedResult<DocumentDto>> SearchAsync(DocumentSearchRequest req)
+    public async Task<PagedResult<DocumentDto>> SearchAsync(DocumentSearchRequest req, string role = "Admin")
     {
         var query = db.Documents
             .Include(d => d.Category)
@@ -123,6 +123,10 @@ public class DocumentService(AppDbContext db)
                 .ThenInclude(f => f.UploadedByUser)
             .Where(d => d.Status != "Deleted")
             .AsQueryable();
+
+        // Users can only see documents in categories marked as user-accessible
+        if (role == "User")
+            query = query.Where(d => d.Category != null && d.Category.IsUserAccessible);
 
         if (req.CategoryId.HasValue)
             query = query.Where(d => d.CategoryId == req.CategoryId.Value);
