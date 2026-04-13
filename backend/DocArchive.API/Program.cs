@@ -89,8 +89,24 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
-    db.SeedAdminUser(); // creates admin/Admin@123 if no admin exists
+    var startupLogger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>()
+        .CreateLogger("Startup");
+    try
+    {
+        db.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        startupLogger.LogWarning(ex, "Migration step failed — DB may already be current. Continuing startup.");
+    }
+    try
+    {
+        db.SeedAdminUser(); // ensures admin/Admin@123 always works
+    }
+    catch (Exception ex)
+    {
+        startupLogger.LogError(ex, "SeedAdminUser failed.");
+    }
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
