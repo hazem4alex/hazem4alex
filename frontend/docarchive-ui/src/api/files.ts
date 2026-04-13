@@ -9,4 +9,14 @@ export const uploadFile = (documentId: number, file: File) => {
 
 export const deleteFile = (id: number) => client.delete(`/files/${id}`);
 
-export const getFileUrl = (id: number) => `/api/files/${id}`;
+export const downloadFile = async (id: number, filename: string): Promise<void> => {
+  const response = await client.get(`/files/${id}`, { responseType: 'blob' });
+  const url = URL.createObjectURL(response.data);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Upload, Button, List, Popconfirm, Typography, message, Space } from 'antd';
 import { UploadOutlined, DeleteOutlined, DownloadOutlined, ScanOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { uploadFile, deleteFile, getFileUrl } from '../../api/files';
+import { uploadFile, deleteFile, downloadFile } from '../../api/files';
 import ScannerDialog from './ScannerDialog';
 
 const { Text } = Typography;
@@ -99,8 +99,7 @@ export default function FileUploadArea({ documentId, existingFiles = [], languag
                 key="dl"
                 type="link"
                 icon={<DownloadOutlined />}
-                href={getFileUrl(f.id)}
-                target="_blank"
+                onClick={() => downloadFile(f.id, f.originalFileName).catch(() => message.error(t('common.error')))}
               >
                 {t('common.download')}
               </Button>,
