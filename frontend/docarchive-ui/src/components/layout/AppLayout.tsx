@@ -13,7 +13,7 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/authStore';
-import { changeUserPassword } from '../../api/users';
+import { changeOwnPassword } from '../../api/users';
 import LanguageSwitcher from './LanguageSwitcher';
 
 const { Header, Sider, Content } = Layout;
@@ -39,7 +39,7 @@ export default function AppLayout() {
     if (!user) return;
     setPwdLoading(true);
     try {
-      await changeUserPassword(user.userId, values.newPassword);
+      await changeOwnPassword(values.newPassword);
       message.success(t('common.success'));
       setChangePwdOpen(false);
       pwdForm.resetFields();

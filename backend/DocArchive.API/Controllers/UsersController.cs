@@ -37,13 +37,8 @@ public class UsersController(UserService userService) : ControllerBase
     }
 
     [HttpPut("{id:int}/password")]
-    [Authorize] // overrides class-level Admin requirement — any authenticated user can hit this
     public async Task<IActionResult> ChangePassword(int id, [FromBody] ChangePasswordRequest req)
     {
-        // Allow Admins to change any password; other roles can only change their own
-        if (!User.IsInRole("Admin") && CurrentUserId != id)
-            return Forbid();
-
         if (string.IsNullOrWhiteSpace(req.NewPassword))
             return BadRequest(new { error = "Password cannot be empty." });
 
