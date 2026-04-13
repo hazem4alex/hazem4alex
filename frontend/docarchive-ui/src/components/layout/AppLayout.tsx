@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Layout, Menu, Button, Avatar, Dropdown, Space, Typography } from 'antd';
+import { Layout, Menu, Button, Avatar, Dropdown, Space, Typography, Modal, Form, Input, message } from 'antd';
 import {
   FileTextOutlined,
   FolderOutlined,
@@ -9,9 +9,11 @@ import {
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  KeyOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/authStore';
+import { changeUserPassword } from '../../api/users';
 import LanguageSwitcher from './LanguageSwitcher';
 
 const { Header, Sider, Content } = Layout;
@@ -23,9 +25,30 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, isAdmin } = useAuthStore();
+  const [changePwdOpen, setChangePwdOpen] = useState(false);
+  const [pwdForm] = Form.useForm();
+  const [pwdLoading, setPwdLoading] = useState(false);
 
-  const lang = useAuthStore((s) => s.user);
   const language = localStorage.getItem('docarchive-lang') || 'ar';
+
+  const handleChangePassword = async (values: { newPassword: string; confirmPassword: string }) => {
+    if (values.newPassword !== values.confirmPassword) {
+      pwdForm.setFields([{ name: 'confirmPassword', errors: [t('users.passwordMismatch')] }]);
+      return;
+    }
+    if (!user) return;
+    setPwdLoading(true);
+    try {
+      await changeUserPassword(user.userId, values.newPassword);
+      message.success(t('common.success'));
+      setChangePwdOpen(false);
+      pwdForm.resetFields();
+    } catch {
+      message.error(t('common.error'));
+    } finally {
+      setPwdLoading(false);
+    }
+  };
 
   const menuItems = [
     { key: '/documents', icon: <FileTextOutlined />, label: t('nav.documents') },
@@ -35,6 +58,13 @@ export default function AppLayout() {
   ];
 
   const userMenu = [
+    {
+      key: 'changePassword',
+      icon: <KeyOutlined />,
+      label: t('users.changePassword'),
+      onClick: () => { pwdForm.resetFields(); setChangePwdOpen(true); },
+    },
+    { type: 'divider' as const },
     {
       key: 'logout',
       icon: <LogoutOutlined />,
@@ -103,6 +133,34 @@ export default function AppLayout() {
           <Outlet />
         </Content>
       </Layout>
+
+      <Modal
+        open={changePwdOpen}
+        title={t('users.changePassword')}
+        onCancel={() => { setChangePwdOpen(false); pwdForm.resetFields(); }}
+        onOk={() => pwdForm.submit()}
+        okText={t('common.save')}
+        cancelText={t('common.cancel')}
+        confirmLoading={pwdLoading}
+        destroyOnClose
+      >
+        <Form form={pwdForm} layout="vertical" onFinish={handleChangePassword}>
+          <Form.Item
+            name="newPassword"
+            label={t('users.newPassword')}
+            rules={[{ required: true, message: t('common.required') }]}
+          >
+            <Input.Password />
+          </Form.Item>
+          <Form.Item
+            name="confirmPassword"
+            label={t('users.confirmPassword')}
+            rules={[{ required: true, message: t('common.required') }]}
+          >
+            <Input.Password />
+          </Form.Item>
+        </Form>
+      </Modal>
     </Layout>
   );
 }
