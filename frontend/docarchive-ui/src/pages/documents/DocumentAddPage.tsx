@@ -7,8 +7,9 @@ import { createDocument } from '../../api/documents';
 import { uploadFile } from '../../api/files';
 import { useSettingsStore } from '../../store/settingsStore';
 import DynamicFormField from '../../components/common/DynamicFormField';
+import ScannerDialog from '../../components/common/ScannerDialog';
 import { Upload } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
+import { UploadOutlined, ScanOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 
@@ -45,6 +46,7 @@ export default function DocumentAddPage() {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [treeLoading, setTreeLoading] = useState(true);
+  const [scanOpen, setScanOpen] = useState(false);
 
   useEffect(() => {
     getCategoryTree().then(setTree).finally(() => setTreeLoading(false));
@@ -112,14 +114,25 @@ export default function DocumentAddPage() {
         )}
 
         <Divider>{t('documents.files')}</Divider>
-        <Upload
-          multiple
-          beforeUpload={(file) => { setPendingFiles((prev) => [...prev, file]); return false; }}
-          fileList={pendingFiles.map((f, i) => ({ uid: String(i), name: f.name, status: 'done' }))}
-          onRemove={(file) => setPendingFiles((prev) => prev.filter((_, i) => String(i) !== file.uid))}
-        >
-          <Button icon={<UploadOutlined />}>{t('documents.uploadFile')}</Button>
-        </Upload>
+        <Space wrap style={{ marginBottom: 8 }}>
+          <Upload
+            multiple
+            beforeUpload={(file) => { setPendingFiles((prev) => [...prev, file]); return false; }}
+            fileList={pendingFiles.map((f, i) => ({ uid: String(i), name: f.name, status: 'done' }))}
+            onRemove={(file) => setPendingFiles((prev) => prev.filter((_, i) => String(i) !== file.uid))}
+          >
+            <Button icon={<UploadOutlined />}>{t('documents.uploadFile')}</Button>
+          </Upload>
+          <Button icon={<ScanOutlined />} onClick={() => setScanOpen(true)}>
+            {t('documents.scanDocument')}
+          </Button>
+        </Space>
+
+        <ScannerDialog
+          open={scanOpen}
+          onClose={() => setScanOpen(false)}
+          onScanned={(file) => setPendingFiles((prev) => [...prev, file])}
+        />
 
         <Form.Item style={{ marginTop: 24 }}>
           <Space>

@@ -28,6 +28,10 @@ builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<DocumentService>();
 builder.Services.AddScoped<JwtHelper>();
 
+// Scanner service — WIA is only available on Windows; on other platforms
+// ISAvailable returns false and the controller returns 503.
+builder.Services.AddSingleton<IScanService, WiaScanService>();
+
 // JWT Authentication
 var jwtSecret = builder.Configuration["Jwt:SecretKey"]!;
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

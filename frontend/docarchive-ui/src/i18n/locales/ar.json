@@ -142,5 +142,23 @@
     "uploadedAt": "تاريخ الرفع",
     "uploadedBy": "رفعه",
     "deleteConfirm": "هل تريد حذف هذا المرفق؟"
+  },
+  "scanner": {
+    "title": "مسح ضوئي للوثيقة",
+    "noDevices": "لم يتم العثور على ماسح ضوئي. تأكد من توصيل الماسح بالخادم.",
+    "selectDevice": "اختر الماسح الضوئي",
+    "resolution": "الدقة",
+    "colorMode": "وضع الألوان",
+    "colorModes": {
+      "Color": "ألوان",
+      "Grayscale": "رمادي",
+      "BlackAndWhite": "أبيض وأسود"
+    },
+    "scan": "مسح",
+    "scanning": "جارٍ المسح…",
+    "useScan": "استخدام هذا المسح",
+    "rescan": "مسح مرة أخرى",
+    "preview": "معاينة المسح",
+    "loadError": "فشل تحميل قائمة الماسحات."
   }
 }

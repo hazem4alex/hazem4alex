@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Upload, Button, List, Popconfirm, Typography, message } from 'antd';
-import { UploadOutlined, DeleteOutlined, DownloadOutlined } from '@ant-design/icons';
+import { Upload, Button, List, Popconfirm, Typography, message, Space } from 'antd';
+import { UploadOutlined, DeleteOutlined, DownloadOutlined, ScanOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { uploadFile, deleteFile, getFileUrl } from '../../api/files';
+import ScannerDialog from './ScannerDialog';
 
 const { Text } = Typography;
 
@@ -33,6 +34,7 @@ export default function FileUploadArea({ documentId, existingFiles = [], languag
   const { t } = useTranslation();
   const [uploading, setUploading] = useState(false);
   const [files, setFiles] = useState<RemoteFile[]>(existingFiles);
+  const [scanOpen, setScanOpen] = useState(false);
 
   const handleUpload = async (file: File) => {
     setUploading(true);
@@ -60,17 +62,32 @@ export default function FileUploadArea({ documentId, existingFiles = [], languag
     }
   };
 
+  const handleScanned = async (file: File) => {
+    await handleUpload(file);
+  };
+
   return (
     <div>
-      <Upload
-        beforeUpload={(file) => { handleUpload(file); return false; }}
-        showUploadList={false}
-        multiple
-      >
-        <Button icon={<UploadOutlined />} loading={uploading}>
-          {t('documents.uploadFile')}
+      <Space wrap>
+        <Upload
+          beforeUpload={(file) => { handleUpload(file); return false; }}
+          showUploadList={false}
+          multiple
+        >
+          <Button icon={<UploadOutlined />} loading={uploading}>
+            {t('documents.uploadFile')}
+          </Button>
+        </Upload>
+        <Button icon={<ScanOutlined />} onClick={() => setScanOpen(true)}>
+          {t('documents.scanDocument')}
         </Button>
-      </Upload>
+      </Space>
+
+      <ScannerDialog
+        open={scanOpen}
+        onClose={() => setScanOpen(false)}
+        onScanned={handleScanned}
+      />
 
       <List
         style={{ marginTop: 12 }}

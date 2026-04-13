@@ -142,5 +142,23 @@
     "uploadedAt": "Uploaded At",
     "uploadedBy": "Uploaded By",
     "deleteConfirm": "Do you want to delete this attachment?"
+  },
+  "scanner": {
+    "title": "Scan Document",
+    "noDevices": "No scanner found. Please ensure a scanner is connected to the server.",
+    "selectDevice": "Select Scanner",
+    "resolution": "Resolution",
+    "colorMode": "Color Mode",
+    "colorModes": {
+      "Color": "Color",
+      "Grayscale": "Grayscale",
+      "BlackAndWhite": "Black & White"
+    },
+    "scan": "Scan",
+    "scanning": "Scanning…",
+    "useScan": "Use This Scan",
+    "rescan": "Scan Again",
+    "preview": "Scan Preview",
+    "loadError": "Failed to load scanner list."
   }
 }
