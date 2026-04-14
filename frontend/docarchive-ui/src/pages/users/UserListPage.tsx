@@ -161,13 +161,13 @@ export default function UserListPage() {
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
         <Title level={4} style={{ margin: 0 }}>{t('users.title')}</Title>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/users/new')}>
           {t('users.addUser')}
         </Button>
       </div>
-      <Table rowKey="id" columns={columns} dataSource={users} loading={loading} />
+      <Table rowKey="id" columns={columns} dataSource={users} loading={loading} scroll={{ x: 600 }} />
 
       {/* Change Password Modal */}
       <Modal

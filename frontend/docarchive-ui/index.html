@@ -51,6 +51,28 @@
       .ant-btn-primary { background: var(--vault-navy) !important; border-color: var(--vault-navy) !important; }
       .ant-btn-primary:hover { background: var(--vault-navy-light) !important; border-color: var(--vault-navy-light) !important; }
       .ant-tag-blue { background: var(--vault-amber-soft) !important; color: var(--vault-amber) !important; border-color: var(--vault-amber) !important; }
+
+      /* ── Responsive overrides ─────────────────────────── */
+      @media (max-width: 767px) {
+        /* Modals take full usable width on mobile */
+        .ant-modal { max-width: calc(100vw - 24px) !important; margin: 12px auto !important; }
+        .ant-modal-content { padding: 16px !important; }
+
+        /* Tables scroll horizontally instead of overflowing */
+        .ant-table-wrapper { overflow-x: auto; }
+
+        /* Form items have tighter vertical spacing */
+        .ant-form-item { margin-bottom: 14px !important; }
+
+        /* Reduce picker/select padding on mobile */
+        .ant-picker, .ant-select-selector { font-size: 14px !important; }
+
+        /* Pagination wraps cleanly */
+        .ant-pagination { flex-wrap: wrap; gap: 4px; }
+
+        /* Drawer mask darker for better focus */
+        .ant-drawer-mask { background: rgba(0,0,0,0.55) !important; }
+      }
     </style>
   </head>
   <body>

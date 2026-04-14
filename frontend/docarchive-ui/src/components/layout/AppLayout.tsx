@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Layout, Menu, Button, Avatar, Dropdown, Space, Typography, Modal, Form, Input, message, Badge } from 'antd';
+import { Layout, Menu, Button, Avatar, Dropdown, Space, Typography, Modal, Form, Input, message, Drawer, Grid } from 'antd';
 import {
   FileTextOutlined,
   FolderOutlined,
@@ -33,12 +33,17 @@ const sectionLabels: Record<string, { en: string; ar: string }> = {
 export default function AppLayout() {
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, isAdmin, isManager } = useAuthStore();
   const [changePwdOpen, setChangePwdOpen] = useState(false);
   const [pwdForm] = Form.useForm();
   const [pwdLoading, setPwdLoading] = useState(false);
+
+  const screens = Grid.useBreakpoint();
+  // md = true when >= 768px; false when < 768px; undefined before first measurement
+  const isMobile = screens.md === false;
 
   const language = localStorage.getItem('docarchive-lang') || 'ar';
   const isRtl = language === 'ar';
@@ -90,21 +95,11 @@ export default function AppLayout() {
   const section = sectionLabels[location.pathname] ?? sectionLabels[baseKey];
   const sectionLabel = section ? (isRtl ? section.ar : section.en) : '';
 
-  return (
-    <Layout style={{ minHeight: '100vh', direction: isRtl ? 'rtl' : 'ltr' }}>
-      {/* ── Sidebar ─────────────────────────────────────── */}
-      <Sider
-        collapsible
-        collapsed={collapsed}
-        trigger={null}
-        width={230}
-        collapsedWidth={64}
-        style={{
-          background: NAVY,
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
+  // Sidebar inner content — shared between Sider (desktop) and Drawer (mobile)
+  const renderSidebarContent = (alwaysExpanded = false) => {
+    const showText = alwaysExpanded || !collapsed;
+    return (
+      <>
         {/* subtle diagonal grid pattern */}
         <div style={{
           position: 'absolute', inset: 0, opacity: 0.04,
@@ -115,12 +110,12 @@ export default function AppLayout() {
 
         {/* Logo / Brand */}
         <div style={{
-          padding: collapsed ? '20px 0' : '22px 20px',
+          padding: showText ? '22px 20px' : '20px 0',
           borderBottom: '1px solid rgba(255,255,255,0.08)',
           display: 'flex',
           alignItems: 'center',
           gap: 10,
-          justifyContent: collapsed ? 'center' : 'flex-start',
+          justifyContent: showText ? 'flex-start' : 'center',
         }}>
           <div style={{
             width: 34, height: 34, borderRadius: 6,
@@ -130,7 +125,7 @@ export default function AppLayout() {
           }}>
             <SafetyCertificateOutlined style={{ color: '#fff', fontSize: 18 }} />
           </div>
-          {!collapsed && (
+          {showText && (
             <div>
               <div style={{ color: '#fff', fontWeight: 700, fontSize: 15, lineHeight: 1.2, fontFamily: "'EB Garamond', serif", letterSpacing: '0.02em' }}>
                 {isRtl ? 'نظام الأرشفة' : 'DocArchive'}
@@ -147,7 +142,11 @@ export default function AppLayout() {
           mode="inline"
           selectedKeys={[location.pathname]}
           items={menuItems}
-          onClick={({ key }) => navigate(key)}
+          inlineCollapsed={alwaysExpanded ? false : collapsed}
+          onClick={({ key }) => {
+            navigate(key);
+            if (isMobile) setDrawerOpen(false);
+          }}
           style={{
             marginTop: 8,
             background: 'transparent',
@@ -156,7 +155,7 @@ export default function AppLayout() {
         />
 
         {/* Role badge at bottom */}
-        {!collapsed && user && (
+        {showText && user && (
           <div style={{
             position: 'absolute', bottom: 16, left: 16, right: 16,
             padding: '8px 12px',
@@ -172,39 +171,82 @@ export default function AppLayout() {
             </div>
           </div>
         )}
-      </Sider>
+      </>
+    );
+  };
+
+  return (
+    <Layout style={{ minHeight: '100vh', direction: isRtl ? 'rtl' : 'ltr' }}>
+      {/* ── Sidebar: Desktop ────────────────────────────── */}
+      {!isMobile && (
+        <Sider
+          collapsible
+          collapsed={collapsed}
+          trigger={null}
+          width={230}
+          collapsedWidth={64}
+          style={{
+            background: NAVY,
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {renderSidebarContent()}
+        </Sider>
+      )}
+
+      {/* ── Sidebar: Mobile Drawer ───────────────────────── */}
+      <Drawer
+        open={isMobile && drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        placement={isRtl ? 'right' : 'left'}
+        width={230}
+        closeIcon={false}
+        styles={{
+          body: { padding: 0, background: NAVY, position: 'relative', overflow: 'hidden' },
+        }}
+      >
+        {renderSidebarContent(true)}
+      </Drawer>
 
       <Layout style={{ background: 'var(--vault-surface)' }}>
-        {/* ── Header ─────────────────────────────────────── */}
+        {/* ── Header ──────────────────────────────────────── */}
         <Header style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           background: '#ffffff',
           borderBottom: '1px solid var(--vault-border)',
-          padding: '0 20px',
+          padding: isMobile ? '0 12px' : '0 20px',
           height: 56,
           boxShadow: '0 1px 4px rgba(13,27,42,0.06)',
         }}>
-          <Space size={16}>
+          <Space size={isMobile ? 8 : 16}>
             <Button
               type="text"
-              icon={collapsed
-                ? <MenuUnfoldOutlined style={{ fontSize: 16, color: NAVY }} />
-                : <MenuFoldOutlined  style={{ fontSize: 16, color: NAVY }} />
+              icon={
+                isMobile
+                  ? <MenuUnfoldOutlined style={{ fontSize: 16, color: NAVY }} />
+                  : collapsed
+                    ? <MenuUnfoldOutlined style={{ fontSize: 16, color: NAVY }} />
+                    : <MenuFoldOutlined   style={{ fontSize: 16, color: NAVY }} />
               }
-              onClick={() => setCollapsed(!collapsed)}
+              onClick={() => isMobile ? setDrawerOpen(true) : setCollapsed(!collapsed)}
               style={{ width: 36, height: 36, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             />
             {sectionLabel && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{ width: 3, height: 18, background: AMBER, borderRadius: 2, flexShrink: 0 }} />
                 <span style={{
-                  fontSize: 15,
+                  fontSize: isMobile ? 13 : 15,
                   fontWeight: 600,
                   color: NAVY,
                   fontFamily: "'EB Garamond', serif",
                   letterSpacing: '0.01em',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: isMobile ? 120 : 'none',
                 }}>
                   {sectionLabel}
                 </span>
@@ -212,14 +254,14 @@ export default function AppLayout() {
             )}
           </Space>
 
-          <Space size={12} align="center">
+          <Space size={isMobile ? 6 : 12} align="center">
             <LanguageSwitcher />
             <div style={{ width: 1, height: 24, background: 'var(--vault-border)' }} />
             <Dropdown menu={{ items: userMenu }} placement={isRtl ? 'bottomLeft' : 'bottomRight'} trigger={['click']}>
               <div style={{
-                display: 'flex', alignItems: 'center', gap: 10,
+                display: 'flex', alignItems: 'center', gap: isMobile ? 0 : 10,
                 cursor: 'pointer',
-                padding: '6px 10px',
+                padding: isMobile ? '6px' : '6px 10px',
                 borderRadius: 6,
                 transition: 'background 0.15s',
               }}
@@ -237,26 +279,35 @@ export default function AppLayout() {
                 >
                   {displayName?.charAt(0).toUpperCase()}
                 </Avatar>
-                <div style={{ lineHeight: 1.3 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: NAVY, whiteSpace: 'nowrap' }}>
-                    {displayName}
+                {!isMobile && (
+                  <div style={{ lineHeight: 1.3 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: NAVY, whiteSpace: 'nowrap' }}>
+                      {displayName}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--vault-muted)' }}>
+                      {t(`users.roles.${user?.role}`)}
+                    </div>
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--vault-muted)' }}>
-                    {t(`users.roles.${user?.role}`)}
-                  </div>
-                </div>
+                )}
               </div>
             </Dropdown>
           </Space>
         </Header>
 
         {/* ── Content ─────────────────────────────────────── */}
-        <Content style={{ margin: '20px', padding: '24px', background: '#ffffff', borderRadius: 8, minHeight: 280, border: '1px solid var(--vault-border)' }}>
+        <Content style={{
+          margin: isMobile ? '8px' : '20px',
+          padding: isMobile ? '16px 12px' : '24px',
+          background: '#ffffff',
+          borderRadius: isMobile ? 6 : 8,
+          minHeight: 280,
+          border: '1px solid var(--vault-border)',
+        }}>
           <Outlet />
         </Content>
       </Layout>
 
-      {/* ── Change Password Modal ───────────────────────── */}
+      {/* ── Change Password Modal ────────────────────────── */}
       <Modal
         open={changePwdOpen}
         title={

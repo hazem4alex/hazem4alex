@@ -168,7 +168,7 @@ export default function CategoryListPage() {
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
         <Title level={4} style={{ margin: 0 }}>{t('categories.title')}</Title>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/categories/new')}>
           {t('categories.addCategory')}
@@ -183,6 +183,7 @@ export default function CategoryListPage() {
           columns={columns}
           dataSource={rows}
           size="small"
+          scroll={{ x: 500 }}
           pagination={{ pageSize: 20, showSizeChanger: false }}
         />
       )}

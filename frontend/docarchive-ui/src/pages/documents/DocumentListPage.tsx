@@ -264,7 +264,7 @@ export default function DocumentListPage() {
   return (
     <div>
       {/* Page header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 8 }}>
         <div>
           <Title level={4} style={{ margin: 0, fontFamily: "'EB Garamond', serif", color: NAVY, fontSize: 22 }}>
             {t('documents.title')}
@@ -386,6 +386,7 @@ export default function DocumentListPage() {
         dataSource={results.items}
         loading={loading}
         size="middle"
+        scroll={{ x: 700 }}
         style={{ borderRadius: 8, overflow: 'hidden', border: '1px solid var(--vault-border)' }}
         pagination={{
           current: results.page,
